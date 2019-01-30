@@ -7,12 +7,15 @@ import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Elevator extends Subsystem{
 
     public TalonSRX  liftMaster, liftSlave;
+
+    //public Spark masterSpark;
 
     double kP = 0;
 	double kI = 0;
@@ -24,6 +27,9 @@ public class Elevator extends Subsystem{
     @Override
     public void initDefaultCommand(){
 
+        //masterSpark = new Spark(3);
+
+        /*
         SmartDashboard.putNumber("Elevator kP", kP);
         SmartDashboard.putNumber("Elevator kI", kI);
         SmartDashboard.putNumber("Elevator kD", kP);
@@ -33,7 +39,8 @@ public class Elevator extends Subsystem{
         kI = SmartDashboard.getNumber("Elevator kP", kI);
         kD = SmartDashboard.getNumber("Elevator kP", kD);
         kF = SmartDashboard.getNumber("Elevator kP", kF);
-
+        */
+        
         liftMaster = new TalonSRX(5);
         liftMaster.setNeutralMode(NeutralMode.Brake);
         
@@ -53,8 +60,9 @@ public class Elevator extends Subsystem{
         liftMaster.config_kI(Constants.kPIDLoopIdx, kI, Constants.kTimeoutMs);
         liftMaster.config_kD(Constants.kPIDLoopIdx, kD, Constants.kTimeoutMs);
         liftMaster.config_kF(Constants.kPIDLoopIdx, kF, Constants.kTimeoutMs);
+        
     }
-
+    /*
     public void moveByInput(double inputY){
         if(inputY == 0){
             liftMaster.set(ControlMode.Position, liftMaster.getSelectedSensorPosition(Constants.kPIDLoopIdx));
@@ -64,7 +72,7 @@ public class Elevator extends Subsystem{
             liftMaster.set(ControlMode.PercentOutput, inputY);
         }
     }
-
+    */
     /*
     public void elevatorPIDSendables(){
 		Constants.elevatorCoefficients.setP(SmartDashboard.getNumber("Elevator kP", Constants.elevatorCoefficients.getP()));
@@ -73,4 +81,8 @@ public class Elevator extends Subsystem{
         Constants.elevatorCoefficients.setF(SmartDashboard.getNumber("Elevator kF", Constants.elevatorCoefficients.getF()));
     }
     */
+
+    public void testMove(double inputY){
+        liftMaster.set(ControlMode.PercentOutput, inputY);
+    }
 }

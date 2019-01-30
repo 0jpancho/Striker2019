@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.SPI;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -33,12 +34,12 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot implements PIDOutput {
-
+	
 	public AutonomousSelector autonSelector;
 
 	public static DriveTrain m_DriveTrain;
 	public static Elevator m_Elevator;
-	public static Pneumatics m_Pneumatics;
+	//public static Pneumatics m_Pneumatics;
 
 	public Joystick joyLeft, joyRight, operator;
 
@@ -46,7 +47,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 	public static double kToleranceDegrees = 2.0f;
 
 	public AHRS navX;
-	double[] tempCoefficients = new double[4];
+	//double[] tempCoefficients = new double[4];
 
 	CameraServer camera;
 
@@ -115,6 +116,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 
 		System.out.println("Robot Initialized");
 		zeroSensors();
+		
 	}
 
 	/**
@@ -131,7 +133,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 	 */
 	@Override
 	public void autonomousInit() {
-
+		
 		System.out.println("Autonomous Initalized");
 
 		String autoSelected = SmartDashboard.getString("Auto Selector", AutonomousSelector.kDefault);
@@ -168,9 +170,12 @@ public class Robot extends TimedRobot implements PIDOutput {
 	@Override
 	public void teleopPeriodic() {
 		
-		m_DriveTrain.tankDrive(joyLeft.getY(), joyRight.getY());
-		m_Elevator.moveByInput(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
 		
+		m_DriveTrain.tankDrive(joyLeft.getY(), joyRight.getY());
+		//m_Elevator.moveByInput(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
+		m_Elevator.testMove(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
+	
+		/*
 		if(operator.getTrigger())
 		{
 			m_Pneumatics.hPusher.set(true);
@@ -190,8 +195,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 		{
 			m_Pneumatics.aLifter.set(false);
 		}
-		
-
+		*/
 	}
 
 	/**
@@ -202,39 +206,33 @@ public class Robot extends TimedRobot implements PIDOutput {
 	}
 
 	public void robotPeriodic() {
-		robotTelemetry();
+		//robotTelemetry();
 
 		//turnPIDSendables();
 		//m_DriveTrain.drivePIDSendables();
 		//m_Elevator.elevatorPIDSendables();
 	}
-
+	
 	public void rotateByGyro(double angle) {
 
-		boolean rotateToAngle = false;
+		turnController.enable();
 
-		while (isAutonomous() && isEnabled()) {
-			
-			turnController.setSetpoint((float) angle);
-			rotateToAngle = false;
+		turnController.setSetpoint(angle);
 
-			double currentRotationRate = 0;
-
-			if (rotateToAngle) {
-				turnController.enable();
-				currentRotationRate = rotateToAngleRate;
-				
-				m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, turnController.get());
-				m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, turnController.get());
-			}
-
-			else {
-				turnController.disable();
-			}
+		while (turnController.onTarget()){
+			pidWrite(turnController.get());
 		}
+
+		turnController.disable();
 		turnController.reset();
 	}
 	
+	@Override
+	public void pidWrite(double output) {
+		m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, output);
+		m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, output);
+	}
+
 	public void robotTelemetry() {
 		SmartDashboard.putNumber("Left Enc Counts", m_DriveTrain.leftMaster.getSelectedSensorPosition(0));
 		SmartDashboard.putNumber("Right Enc Counts", m_DriveTrain.rightMaster.getSelectedSensorPosition(0));
@@ -247,11 +245,6 @@ public class Robot extends TimedRobot implements PIDOutput {
 		SmartDashboard.putBoolean("Rotating Right?", isRotatingRight);
 	}
 	
-	@Override
-	public void pidWrite(double output) {
-		rotateToAngleRate = output;
-	}
-
 	void zeroYaw() {
 		navX.reset();
 	}
@@ -266,8 +259,6 @@ public class Robot extends TimedRobot implements PIDOutput {
 	public void simpleTurnByGyro (double angle, double power, double direction){
 
 		zeroYaw();
-
-		
 
 		//Left
 		if (direction == 0){
