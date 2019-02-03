@@ -2,48 +2,32 @@ package frc.robot.util;
 
 public class PIDCoefficients {
 
-    public double kP;
-    public double kI;
-    public double kD;
-    public double kF;
+    public double p;
+    public double i;
+    public double d;
+    public double f;
 
-    public PIDCoefficients(double _kP, double _kI, double _kD, double _kF) {
-
-        kP = _kP;
-        kI = _kI;
-        kD = _kD;
-        kF = _kF;
+    public PIDCoefficients(double p, double i, double d, double f){
+        this.p = p;
+        this.i = i;
+        this.d = d;
+        this.f = f;
     }
 
     public double getP() {
-        return kP;
-    }
-
-    public void setP(double kP) {
-        this.kP = kP;
+        return p;
     }
 
     public double getI() {
-        return kI;
-    }
-
-    public void setI(double kI) {
-        this.kI = kI;
+        return i;
     }
 
     public double getD() {
-        return kD;
-    }
-
-    public void setD(double kD) {
-        this.kD = kD;
+        return d;
     }
 
     public double getF() {
-        return kF;
+        return f;
     }
 
-    public void setF(double kF) {
-        this.kF = kF;
-    }
 }

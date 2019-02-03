@@ -11,7 +11,7 @@ import frc.robot.util.AutonomousSelector;
 import frc.robot.util.Constants;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Pneumatics;
+import frc.robot.subsystems.Manipulator;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.kauailabs.navx.frc.AHRS;
@@ -22,8 +22,8 @@ import edu.wpi.first.wpilibj.PIDController;
 import edu.wpi.first.wpilibj.PIDOutput;
 import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -39,7 +39,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 
 	public static DriveTrain m_DriveTrain;
 	public static Elevator m_Elevator;
-	//public static Pneumatics m_Pneumatics;
+	public static Manipulator m_Manipulator;
 
 	public Joystick joyLeft, joyRight, operator;
 
@@ -47,13 +47,12 @@ public class Robot extends TimedRobot implements PIDOutput {
 	public static double kToleranceDegrees = 2.0f;
 
 	public AHRS navX;
-	//double[] tempCoefficients = new double[4];
 
 	CameraServer camera;
 
 	double rotateToAngleRate = 0;
 
-	double kP = 0;
+	double kP = 1;
 	double kI = 0;
 	double kD = 0;
 	double kF = 0;
@@ -76,36 +75,24 @@ public class Robot extends TimedRobot implements PIDOutput {
 		SmartDashboard.putNumber("Turn kD", kD);
 		SmartDashboard.putNumber("Turn kF", kF);
 
-		kP = SmartDashboard.getNumber("Turn kP", 0);
+		/*
+		kP = SmartDashboard.getNumber("Turn kP", 1);
 		kI = SmartDashboard.getNumber("Turn kI", 0);
 		kD = SmartDashboard.getNumber("Turn kD", 0);
 		kF = SmartDashboard.getNumber("Turn kF", 0);
+		*/
 
 		turnController = new PIDController(kP, kI, kD, kF, navX, this);
 		turnController.setInputRange(-180.0f, 180.0f);
 		turnController.setOutputRange(-1.0, 1.0);
 		turnController.setAbsoluteTolerance(kToleranceDegrees);
 		turnController.setContinuous(true);
-
-		/*
-		tempCoefficients[0] = Constants.driveCoefficients.getP();
-		tempCoefficients[1] = Constants.driveCoefficients.getI();
-		tempCoefficients[2] = Constants.driveCoefficients.getD();
-		tempCoefficients[3] = Constants.driveCoefficients.getF();
-		*/
-
-		//SmartDashboard.putNumberArray("Turn Coefficients", tempCoefficients);
-
+		
 		autonSelector = new AutonomousSelector();
 
 		m_DriveTrain = new DriveTrain();
-		m_DriveTrain.initDefaultCommand();
-
 		m_Elevator = new Elevator();
-		m_Elevator.initDefaultCommand();
-
-		//m_Pneumatics = new Pneumatics();
-		//m_Pneumatics.initDefaultCommand();
+		m_Manipulator = new Manipulator();
 
 		//camera = CameraServer.getInstance();
 		//camera.startAutomaticCapture();
@@ -133,27 +120,23 @@ public class Robot extends TimedRobot implements PIDOutput {
 	 */
 	@Override
 	public void autonomousInit() {
+
+		zeroSensors();
 		
 		System.out.println("Autonomous Initalized");
 
-		String autoSelected = SmartDashboard.getString("Auto Selector", AutonomousSelector.kDefault);
+		Timer timer = new Timer();
+		timer.start();
 
-		if (autoSelected.equals(AutonomousSelector.kDefault)) {
-			m_DriveTrain.moveByInches(24);
+		while (timer.get() < 5 && isEnabled()){
+			m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, 0.75);
+			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, 0.75);
 		}
 
-		else if (autoSelected.equals(AutonomousSelector.kLeft)) {
-			rotateByGyro(-90f);
-		}
+		m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, 0.);
+			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, 0);
+	
 
-		else if (autoSelected.equals(AutonomousSelector.kMiddle)) {
-
-		}
-
-		else if (autoSelected.equals(AutonomousSelector.kRight)) {
-			rotateByGyro(90f);
-		}
-		
 	}
 
 	/**
@@ -161,7 +144,32 @@ public class Robot extends TimedRobot implements PIDOutput {
 	 */
 	@Override
 	public void autonomousPeriodic() {
+		String autoSelected = SmartDashboard.getString("Auto Selector", autonSelector.kForward);
 		
+		/*
+		while (isAutonomous() && isEnabled()){
+			
+			if (autoSelected.equals(AutonomousSelector.kForward)) {
+				System.out.println("Driving Forward");
+				m_DriveTrain.moveByInches(24);
+			}
+	
+			else if (autoSelected.equals(AutonomousSelector.kLeft)) {
+				System.out.println("Going to the Left");
+				//rotateByGyro(-90f);
+				simpleTurnByGyro(-90, 0.5, 1);
+			}
+	
+			else if (autoSelected.equals(AutonomousSelector.kMiddle)) {
+	
+			}
+	
+			else if (autoSelected.equals(AutonomousSelector.kRight)) {
+				rotateByGyro(90f);
+			}
+			break;
+		}
+		*/
 	}
 
 	/**
@@ -172,30 +180,24 @@ public class Robot extends TimedRobot implements PIDOutput {
 		
 		
 		m_DriveTrain.tankDrive(joyLeft.getY(), joyRight.getY());
-		//m_Elevator.moveByInput(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
 		m_Elevator.testMove(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
-	
-		/*
-		if(operator.getTrigger())
-		{
-			m_Pneumatics.hPusher.set(true);
-		}
+		
+		m_Manipulator.toggleExtender(operator.getRawButton(Constants.kGamepadButtonShoulderL));
+		m_Manipulator.toggleHatchRelease(operator.getRawButton(Constants.kGamepadButtonShoulderR));
 
-		else
-		{
-			m_Pneumatics.hPusher.set(false);
-		}
+		m_Manipulator.compressor.start();
+		//m_Manipulator.useCompressor(operator.getRawButton(Constants.kGamepadButtonB));
+	}
 
-		if(operator.getRawButton(2))
-		{
-			m_Pneumatics.aLifter.set(true);		
-		}
+	@Override
+	public void disabledInit(){
+		zeroSensors();
+	}
 
-		else
-		{
-			m_Pneumatics.aLifter.set(false);
-		}
-		*/
+	public void robotPeriodic() {
+		robotTelemetry();
+
+		m_Manipulator.telemetry();
 	}
 
 	/**
@@ -205,22 +207,14 @@ public class Robot extends TimedRobot implements PIDOutput {
 	public void testPeriodic() {
 	}
 
-	public void robotPeriodic() {
-		//robotTelemetry();
-
-		//turnPIDSendables();
-		//m_DriveTrain.drivePIDSendables();
-		//m_Elevator.elevatorPIDSendables();
-	}
-	
 	public void rotateByGyro(double angle) {
 
 		turnController.enable();
 
 		turnController.setSetpoint(angle);
-
 		while (turnController.onTarget()){
-			pidWrite(turnController.get());
+			m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, turnController.get());
+			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, turnController.get());
 		}
 
 		turnController.disable();

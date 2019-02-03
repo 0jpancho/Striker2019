@@ -5,7 +5,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class AutonomousSelector {
 	
-	public static final String kDefault = "Drive Forward";
+	public static final String kForward = "Drive Forward";
 	public static final String kLeft = "Left";
 	public static final String kMiddle = "Middle";
 	public static final String kRight = "Right";
@@ -14,11 +14,12 @@ public class AutonomousSelector {
 	
 	public AutonomousSelector() {
 		
-		m_AutonChooser.setDefaultOption("Drive Forward", kDefault);
+		m_AutonChooser.setDefaultOption("Drive Forward", kForward);
 		m_AutonChooser.addOption("Left", kLeft);
 		m_AutonChooser.addOption("Middle", kMiddle);
 		m_AutonChooser.addOption("Right", kRight);
 		
-		SmartDashboard.putData("Auto Selector", m_AutonChooser);
+		//SmartDashboard.putData("Auto Selector", m_AutonChooser);
+		SmartDashboard.putData(m_AutonChooser);
 	}
 }
