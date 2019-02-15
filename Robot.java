@@ -128,15 +128,16 @@ public class Robot extends TimedRobot implements PIDOutput {
 		Timer timer = new Timer();
 		timer.start();
 
-		while (timer.get() < 5 && isEnabled()){
-			m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, 0.75);
-			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, 0.75);
+		while (timer.get() < 2 && isEnabled()){
+			m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, 0.5);
+			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, 0.5);
 		}
 
-		m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, 0.);
-			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, 0);
+		m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, 0);
+		m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, 0);
 	
-
+		timer.stop();
+		timer.reset();
 	}
 
 	/**
@@ -144,7 +145,10 @@ public class Robot extends TimedRobot implements PIDOutput {
 	 */
 	@Override
 	public void autonomousPeriodic() {
-		String autoSelected = SmartDashboard.getString("Auto Selector", autonSelector.kForward);
+		
+		m_DriveTrain.arcadeDrive(-joyLeft.getY(), joyLeft.getX(), 0.5, joyLeft.getTrigger());
+		
+		//String autoSelected = SmartDashboard.getString("Auto Selector", autonSelector.kForward);
 		
 		/*
 		while (isAutonomous() && isEnabled()){
@@ -179,14 +183,17 @@ public class Robot extends TimedRobot implements PIDOutput {
 	public void teleopPeriodic() {
 		
 		
-		m_DriveTrain.tankDrive(joyLeft.getY(), joyRight.getY());
+		//m_DriveTrain.tankDrive(joyLeft.getY(), joyRight.getY(), 0.5, joyRight.getTrigger());
+		m_DriveTrain.arcadeDrive(-joyLeft.getY(), joyLeft.getX(), 0.5, joyLeft.getTrigger());
 		m_Elevator.testMove(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
 		
 		m_Manipulator.toggleExtender(operator.getRawButton(Constants.kGamepadButtonShoulderL));
 		m_Manipulator.toggleHatchRelease(operator.getRawButton(Constants.kGamepadButtonShoulderR));
 
-		m_Manipulator.compressor.start();
-		//m_Manipulator.useCompressor(operator.getRawButton(Constants.kGamepadButtonB));
+		m_Manipulator.pivotWrist(operator.getRawAxis(Constants.kGamepadAxisLeftStickY));
+
+		m_Manipulator.toggleCargoArms(operator.getRawButton(Constants.kGamepadButtonX));
+		m_Manipulator.toggleCargoPuncher(operator.getRawButton(Constants.kGamepadButtonA));
 	}
 
 	@Override
@@ -213,8 +220,7 @@ public class Robot extends TimedRobot implements PIDOutput {
 
 		turnController.setSetpoint(angle);
 		while (turnController.onTarget()){
-			m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, turnController.get());
-			m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, turnController.get());
+			pidWrite(turnController.get());
 		}
 
 		turnController.disable();
@@ -223,8 +229,8 @@ public class Robot extends TimedRobot implements PIDOutput {
 	
 	@Override
 	public void pidWrite(double output) {
-		m_DriveTrain.leftMaster.set(ControlMode.PercentOutput, output);
-		m_DriveTrain.rightMaster.set(ControlMode.PercentOutput, output);
+		m_DriveTrain.leftMaster.pidWrite(output);
+		m_DriveTrain.rightMaster.pidWrite(output);
 	}
 
 	public void robotTelemetry() {

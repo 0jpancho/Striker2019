@@ -1,6 +1,5 @@
 package frc.robot.subsystems;
 
-import frc.robot.Robot;
 import frc.robot.util.Constants;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
@@ -10,7 +9,7 @@ import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
-import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.smartdashboard.*;
 
@@ -19,7 +18,7 @@ public class DriveTrain extends Subsystem {
 	// Put methods for controlling this subsystem
 	// here. Call these from Commands.
 
-	public TalonSRX leftMaster, rightMaster, leftSlave, rightSlave;
+	public WPI_TalonSRX leftMaster, rightMaster, leftSlave, rightSlave;
 	Constants constants;
 
 	double kP = 1;
@@ -87,6 +86,8 @@ public class DriveTrain extends Subsystem {
 		leftMaster.config_kD(Constants.kPIDLoopIdx, kD, Constants.kTimeoutMs);
 		leftMaster.config_kF(Constants.kPIDLoopIdx, kF, Constants.kTimeoutMs);
 
+		leftMaster.configOpenloopRamp(0.5, 20);
+
 		rightMaster.setNeutralMode(NeutralMode.Coast);
 		rightMaster.configSelectedFeedbackSensor(FeedbackDevice.CTRE_MagEncoder_Relative, Constants.kPIDLoopIdx,
 				Constants.kTimeoutMs);
@@ -100,6 +101,8 @@ public class DriveTrain extends Subsystem {
 		rightMaster.config_kI(Constants.kPIDLoopIdx, kI, Constants.kTimeoutMs);
 		rightMaster.config_kD(Constants.kPIDLoopIdx, kD, Constants.kTimeoutMs);
 		rightMaster.config_kF(Constants.kPIDLoopIdx, kF, Constants.kTimeoutMs);
+
+		rightMaster.configOpenloopRamp(0.5, 20);
 		
 		resetDriveMotors();
 	}
@@ -108,17 +111,31 @@ public class DriveTrain extends Subsystem {
 	
 	}
 	
-	public void tankDrive(double leftInput, double rightInput) {
-		leftMaster.set(ControlMode.PercentOutput, -leftInput);
-		rightMaster.set(ControlMode.PercentOutput, -rightInput);
+	public void tankDrive(double leftInput, double rightInput, double multiplier, boolean toggleFull) {
+		if (toggleFull){
+			leftMaster.set(ControlMode.PercentOutput, -leftInput);
+			rightMaster.set(ControlMode.PercentOutput, -rightInput);
+		}
+
+		else {
+			leftMaster.set(ControlMode.PercentOutput, -leftInput * multiplier);
+			rightMaster.set(ControlMode.PercentOutput, -rightInput * multiplier);
+		}
 	}
 
-	/*
-	public void arcadeDrive(Joystick mainDrive) {
-		leftMaster.set(ControlMode.PercentOutput, mainDrive.getY() - mainDrive.getX());
-		rightMaster.set(ControlMode.PercentOutput, mainDrive.getY() - mainDrive.getX());
+	
+	public void arcadeDrive(double inputY, double inputX, double multiplier, boolean toggleFull) {
+		if (toggleFull){
+			leftMaster.set(ControlMode.PercentOutput, inputY - inputX);
+			rightMaster.set(ControlMode.PercentOutput, inputY + inputX);
+		}
+
+		else{
+			leftMaster.set(ControlMode.PercentOutput, (inputY - inputX) * multiplier);
+			rightMaster.set(ControlMode.PercentOutput, (inputY + inputX) * multiplier);
+		}
 	}
-	*/
+	
 
 	public void moveByInches(double distance) {
 
