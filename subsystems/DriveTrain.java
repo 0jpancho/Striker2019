@@ -130,6 +130,7 @@ public class DriveTrain extends Subsystem {
 			rightMaster.set(ControlMode.PercentOutput, inputY + inputX);
 		}
 
+		
 		else{
 			leftMaster.set(ControlMode.PercentOutput, (inputY - inputX) * multiplier);
 			rightMaster.set(ControlMode.PercentOutput, (inputY + inputX) * multiplier);

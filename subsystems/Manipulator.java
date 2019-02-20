@@ -5,15 +5,18 @@ import frc.robot.util.Constants;
 import edu.wpi.first.wpilibj.Compressor;
 import edu.wpi.first.wpilibj.DoubleSolenoid;
 import edu.wpi.first.wpilibj.Relay;
+import edu.wpi.first.wpilibj.Spark;
 import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.command.Subsystem;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Manipulator extends Subsystem
 {
-    private DoubleSolenoid hatchExtender, hatchRelease, cargoArms, cargoPuncher;
+    public DoubleSolenoid hatchExtender, hatchRelease, cargoArms, cargoPuncher;
 
-    private Relay pivotOne, pivotTwo;
+    //private Relay pivotOne, pivotTwo;
+
+    private Spark pivotOne, pivotTwo;
     
     private boolean extenderToggle = false;
     private boolean hatchReleaseToggle = false;
@@ -30,14 +33,18 @@ public class Manipulator extends Subsystem
         hatchExtender = new DoubleSolenoid(2, 3);
         hatchRelease = new DoubleSolenoid(0, 1);
 
-        cargoPuncher = new DoubleSolenoid(6, 7);
-        cargoArms = new DoubleSolenoid(4, 5);
+        cargoPuncher = new DoubleSolenoid(4, 5);
+        cargoArms = new DoubleSolenoid(6, 7);
         
-        pivotOne = new Relay(0);
-        pivotTwo = new Relay(1);
+        //pivotOne = new Relay(0);
+        //pivotTwo = new Relay(1);
+
+        pivotOne = new Spark(0);
+        pivotTwo = new Spark(1);
 
         compressor = new Compressor();
         compressor.start();
+        //compressor.stop();
     }
 
     @Override
@@ -124,6 +131,7 @@ public class Manipulator extends Subsystem
         }
     }
 
+    /*
     public void pivotWrist(double inputY){
 
         if (inputY > 0.25){
@@ -141,6 +149,12 @@ public class Manipulator extends Subsystem
             pivotTwo.set(edu.wpi.first.wpilibj.Relay.Value.kOff);
         }
     }
+    */
+
+    public void pivotWrist(double inputY, double multiplier){
+        pivotOne.set(inputY * multiplier);
+        pivotTwo.set(inputY * multiplier);
+    }
 
     public void useCompressor(boolean toggle){
         if (toggle){
@@ -151,6 +165,8 @@ public class Manipulator extends Subsystem
     public void telemetry(){
         SmartDashboard.putBoolean("Hatch Extender Toggle", extenderToggle);
         SmartDashboard.putBoolean("Hatch Release Toggle", hatchReleaseToggle);
+
         SmartDashboard.putBoolean("Cargo Release Toggle", cargoArmsToggle);
+        SmartDashboard.putBoolean("Cargo Puncher Toggle", cargoPuncherToggle);
     }
 }

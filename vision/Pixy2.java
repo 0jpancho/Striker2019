@@ -371,7 +371,7 @@ public class Pixy2 {
 	 * 
 	 * @return Length of bytes received or Pixy2 error code
 	 */
-	protected int receivePacket() {
+	public int receivePacket() {
 		int csSerial, res;
 		Checksum csCalc = new Checksum();
 
@@ -425,6 +425,7 @@ public class Pixy2 {
 		for (int i = 0; i < length; i++) {
 			buffer[4 + i] = bufferPayload[i];
 		}
+		
 		return link.send(buffer, (byte) (length + PIXY_SEND_HEADER_SIZE));
 	}
 

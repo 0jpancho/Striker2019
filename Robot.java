@@ -9,6 +9,9 @@ package frc.robot;
 
 import frc.robot.util.AutonomousSelector;
 import frc.robot.util.Constants;
+import frc.robot.vision.Pixy2;
+import frc.robot.vision.links.Link;
+import frc.robot.vision.links.UARTLink;
 import frc.robot.subsystems.DriveTrain;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Manipulator;
@@ -16,6 +19,7 @@ import frc.robot.subsystems.Manipulator;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.kauailabs.navx.frc.AHRS;
 
+import edu.wpi.cscore.UsbCamera;
 import edu.wpi.first.cameraserver.CameraServer;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.PIDController;
@@ -24,6 +28,7 @@ import edu.wpi.first.wpilibj.PIDSourceType;
 import edu.wpi.first.wpilibj.SPI;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.DoubleSolenoid.Value;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -48,7 +53,11 @@ public class Robot extends TimedRobot implements PIDOutput {
 
 	public AHRS navX;
 
-	CameraServer camera;
+	
+	UARTLink link;
+	Pixy2 pixy;
+
+	//CameraServer camera;
 
 	double rotateToAngleRate = 0;
 
@@ -95,7 +104,15 @@ public class Robot extends TimedRobot implements PIDOutput {
 		m_Manipulator = new Manipulator();
 
 		//camera = CameraServer.getInstance();
-		//camera.startAutomaticCapture();
+		//camera.startAutomaticCapture(0);
+
+		new Thread(() ->{
+			UsbCamera camera = CameraServer.getInstance().startAutomaticCapture();
+		camera.setResolution(480, 360);
+		camera.setFPS(12);
+		}).start();
+
+		//SmartDashboard.putData("thing", camera.getVideo("Driver View", 480, 320));		
 
 		joyLeft = new Joystick(0);
 		joyRight = new Joystick(1);
@@ -184,16 +201,33 @@ public class Robot extends TimedRobot implements PIDOutput {
 		
 		
 		//m_DriveTrain.tankDrive(joyLeft.getY(), joyRight.getY(), 0.5, joyRight.getTrigger());
-		m_DriveTrain.arcadeDrive(-joyLeft.getY(), joyLeft.getX(), 0.5, joyLeft.getTrigger());
+		if (joyLeft.getRawButton(2)){
+			m_DriveTrain.arcadeDrive(joyLeft.getY(), joyLeft.getX(), 0.5, joyLeft.getTrigger());
+		}
+
+		else {
+			m_DriveTrain.arcadeDrive(-joyLeft.getY(), joyLeft.getX(), 0.5, joyLeft.getTrigger());
+		}
 		m_Elevator.testMove(operator.getRawAxis(Constants.kGamepadAxisRightStickY));
 		
 		m_Manipulator.toggleExtender(operator.getRawButton(Constants.kGamepadButtonShoulderL));
 		m_Manipulator.toggleHatchRelease(operator.getRawButton(Constants.kGamepadButtonShoulderR));
 
-		m_Manipulator.pivotWrist(operator.getRawAxis(Constants.kGamepadAxisLeftStickY));
+		m_Manipulator.pivotWrist(-operator.getRawAxis(Constants.kGamepadAxisLeftStickY), 0.85);
 
 		m_Manipulator.toggleCargoArms(operator.getRawButton(Constants.kGamepadButtonX));
 		m_Manipulator.toggleCargoPuncher(operator.getRawButton(Constants.kGamepadButtonA));
+
+		/*
+		if(operator.getRawButton(Constants.kGamepadButtonX)){
+
+			m_Manipulator.cargoArms.set(Value.kReverse);
+
+		}
+		else{
+			m_Manipulator.cargoArms.set(Value.kForward);
+		}
+		*/
 	}
 
 	@Override
